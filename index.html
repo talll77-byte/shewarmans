@@ -1,299 +1,115 @@
-<!DOCTYPE html>
-<html lang="he" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <base target="_top">
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-    <link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;600;800&family=IBM+Plex+Sans+Hebrew:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #1A202C;
-            --primary-light: #2D3748;
-            --accent: #FF6B00;
-            --accent-grad: linear-gradient(135deg, #FF6B00 0%, #FF9D5C 100%);
-            --bg: #F7FAFC;
-            --surface: #FFFFFF;
-            --text-main: #2D3748;
-            --text-muted: #718096;
-            --shadow-3d: 10px 10px 20px #d1d9e6, -10px -10px 20px #ffffff;
-            --shadow-inset: inset 2px 2px 5px #b8b9be, inset -3px -3px 7px #ffffff;
-        }
-
-        body { 
-            font-family: 'Assistant', sans-serif; 
-            background: var(--bg); 
-            margin: 0; padding: 15px; 
-            display: flex; justify-content: center; min-height: 100vh;
-        }
-
-        .app-shell {
-            width: 100%; max-width: 480px;
-            background: var(--surface);
-            border-radius: 35px;
-            padding: 30px;
-            box-shadow: var(--shadow-3d);
-            position: relative;
-        }
-
-        .lang-btn {
-            position: absolute; top: 25px; left: 25px;
-            background: var(--surface); border: none;
-            padding: 8px 16px; border-radius: 12px;
-            box-shadow: var(--shadow-3d);
-            font-weight: 800; cursor: pointer; z-index: 10;
-        }
-
-        .header { text-align: center; margin-bottom: 35px; }
-        .logo-wrap {
-            width: 85px; height: 85px; margin: 0 auto 15px;
-            background: var(--surface); border-radius: 22px;
-            box-shadow: var(--shadow-3d);
-            display: flex; align-items: center; justify-content: center;
-        }
-        .logo-wrap img { width: 65px; border-radius: 12px; }
-        h1 { font-weight: 800; color: var(--primary); font-size: 24px; margin: 0; letter-spacing: -1px; }
-
-        .tabs-nav {
-            display: flex; gap: 8px; margin-bottom: 30px;
-            background: #EDF2F7; padding: 6px; border-radius: 18px;
-        }
-        .tab-trigger {
-            flex: 1; padding: 12px; border: none; border-radius: 14px;
-            background: transparent; color: var(--text-muted);
-            font-weight: 700; cursor: pointer; transition: 0.3s;
-        }
-        .tab-trigger.active {
-            background: var(--surface); color: var(--primary);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        .field-group { margin-bottom: 20px; }
-        label { display: block; font-weight: 700; margin-bottom: 10px; color: var(--primary); font-size: 15px; }
-        input, select {
-            width: 100%; padding: 15px; border-radius: 16px;
-            border: 1px solid transparent; background: #F8FAFC;
-            box-shadow: var(--shadow-inset);
-            box-sizing: border-box; font-size: 16px; outline: none;
-        }
-
-        .btn-submit {
-            width: 100%; padding: 20px; border: none; border-radius: 22px;
-            background: var(--primary); color: white;
-            font-weight: 800; font-size: 19px; cursor: pointer;
-            box-shadow: 0 12px 24px rgba(26, 32, 44, 0.25);
-            transition: 0.3s;
-        }
-
-        .history-item {
-            background: #F8FAFC; padding: 18px; border-radius: 20px;
-            margin-bottom: 12px; border-right: 6px solid var(--accent);
-            display: flex; justify-content: space-between; align-items: center;
-        }
-
-        .console-box {
-            background: #1A202C; color: #48BB78; padding: 18px;
-            border-radius: 20px; font-family: 'Courier New', monospace;
-            font-size: 14px; white-space: pre-wrap; margin-bottom: 12px;
-            box-shadow: var(--shadow-inset); border: 1px solid #2D3748;
-            max-height: 280px; overflow-y: auto; text-align: left; direction: ltr;
-        }
-        .copy-pill {
-            background: var(--accent); color: white; padding: 12px;
-            border-radius: 14px; text-align: center; cursor: pointer;
-            font-weight: 800; font-size: 14px; margin-bottom: 20px;
-        }
-
-        #loader {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(255,255,255,0.9); z-index: 1000;
-            flex-direction: column; align-items: center; justify-content: center;
-        }
-        .spinner { width: 50px; height: 50px; border: 5px solid #E2E8F0; border-top-color: var(--accent); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-    </style>
-</head>
-<body>
-
-<div id="loader">
-    <div class="spinner"></div>
-    <p style="font-weight: 800; margin-top: 15px; color: var(--primary);" id="load-msg">טוען נתונים...</p>
-</div>
-
-<div class="app-shell">
-    <button class="lang-btn" onclick="UI.toggleLang()">RU / HE</button>
-    
-    <div class="header">
-        <div class="logo-wrap">
-            <img src="https://i.ibb.co/0pgKvP8y/1770184520210.png" alt="Logo">
-        </div>
-        <h1 id="app-title">THE HUNGRY PISTOL</h1>
-    </div>
-
-    <div class="tabs-nav">
-        <button class="tab-trigger active" onclick="UI.switchTab('order')" id="tab-order">הזמנה</button>
-        <button class="tab-trigger" onclick="UI.switchTab('history')" id="tab-history">היסטוריה</button>
-        <button class="tab-trigger" onclick="UI.switchTab('admin')" id="tab-admin">ניהול</button>
-    </div>
-
-    <div id="view-order">
-        <div class="field-group">
-            <label id="lbl-name">שם עובד מלא</label>
-            <input type="text" id="name" placeholder="הקלד שם..." onblur="UI.autoLoadHistory()">
-        </div>
-        <div class="field-group">
-            <label id="lbl-type">סוג הלחם</label>
-            <select id="type">
-                <option value="לאפה">לאפה / Лафа</option>
-                <option value="פיתה">פיתה / Пита</option>
-                <option value="חמגשית">חמגשית / Тарелка</option>
-            </select>
-        </div>
-        <div class="field-group">
-            <label id="lbl-meat">בחירת בשר</label>
-            <select id="meat">
-                <option value="עגל">עגל / Телятина</option>
-                <option value="פרגית">פרגית / Курица</option>
-                <option value="מעורב">מעורב / Микс</option>
-            </select>
-        </div>
-        <div class="field-group">
-            <label id="lbl-drink">שתייה</label>
-            <select id="drink">
-                <option value="ללא">ללא / Без напитка</option>
-                <option value="קוקה קולה">קוקה קולה</option>
-                <option value="קולה זירו">קולה זירו</option>
-                <option value="ענבים">ענבים</option>
-                <option value="מים">מים</option>
-            </select>
-        </div>
-        <div class="field-group">
-            <label id="lbl-note">הערות מיוחדות</label>
-            <input type="text" id="note" placeholder="תוספות...">
-        </div>
-        <button class="btn-submit" onclick="UI.submitOrder()" id="btn-submit">שלח הזמנה</button>
-    </div>
-
-    <div id="view-history" style="display:none;">
-        <div id="hist-list"></div>
-    </div>
-
-    <div id="view-admin" style="display:none;">
-        <button class="btn-submit" style="margin-bottom:10px;" onclick="UI.fetchSummary('daily')">סיכום יומי</button>
-        <div id="admin-results" style="display:none;">
-            <div class="console-box" id="out-he"></div>
-            <div class="copy-pill" onclick="UI.copy('out-he')">העתק עברית 📋</div>
-            <div class="console-box" id="out-ru"></div>
-            <div class="copy-pill" onclick="UI.copy('out-ru')">Копировать RU 📋</div>
-        </div>
-    </div>
-</div>
-
 <script>
-    // --- קונפיגורציה מרכזית ---
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxWQ-LNlZehg9D8l9Yv8WVywXC4zqSpdEVjo8W6luj2j5qIcsTnuZXVMREBXLgJZ7jPEA/exec";
-    const API_SECRET = "HP_SECURE_2024_!@#"; 
+    const PROXY_URL = "https://rough-bush-1bda.talll77.workers.dev";
+
+    const APP_DATA = {
+        employees: [
+            { he: "רשיד באקייב", ru: "Рашид Бакаев", id: "10211" },
+            { he: "טל לדיז'ינסקי", ru: "Таль Ладыжинский", id: "10201" },
+            { he: "סרגיי סופוניצקי", ru: "Сергей Софоницкий", id: "100149" },
+            { he: "אנדריי בייטין", ru: "Андрей Бейтин", id: "101088" },
+            { he: "קרימר אלכסנדר", ru: "Александр Кример", id: "10238" },
+            { he: "קוסטיה אסקרוב", ru: "Костя Aскаров", id: "10318" },
+            { he: "אנג'ליקה פומזונובסקי", ru: "Анжелика Помозоновски", id: "10229" }
+        ],
+        main_course: [
+            { he: "מגש", ru: "В лотке (Хамгашит)" },
+            { he: "בפיתה (כולל פחית שתייה)", ru: "В пите (включая напиток)" },
+            { he: "בבגט (כולל פחית שתייה)", ru: "В багете (включая напиток)" }
+        ],
+        meat: [
+            { he: "מעורב גבי", ru: "смешанный Габи" },
+            { he: "פרגית", ru: "Паргит" },
+            { he: "שווארמה", ru: "Шаурма" },
+            { he: "קבב", ru: "Кебаб" }
+        ],
+        beverages: [
+            { he: "קולה זירו", ru: "Кола Зеро" },
+            { he: "קולה", ru: "Кола" },
+            { he: "ספרייט", ru: "Спрайт" }
+        ],
+        common_notes: ["בלי בצל", "לא קולה. או ספרייט", "לא לשים בצל חי", "לי בלי לי - בצל חיי"]
+    };
 
     const UI = {
         lang: 'he',
-        dict: {
-            he: { title: 'THE HUNGRY PISTOL', submit: 'שלח / עדכן הזמנה', loading: 'מעבד נתונים...' },
-            ru: { title: 'ГОЛОДНЫЙ ПИСТОЛЕТ', submit: 'Отправить / Обновить', loading: 'Загрузка...' }
+        
+        init() {
+            this.renderMenus();
+            this.updatePlaceholders();
         },
 
-        async api(action, data = {}) {
-            try {
-                const response = await fetch(WEB_APP_URL, {
-                    method: 'POST',
-                    mode: 'no-cors', // חשוב למניעת חסימות CORS ראשוניות בגוגל
-                    body: JSON.stringify({ secret: API_SECRET, action: action, ...data })
-                });
-                // הערה: בגלל 'no-cors' לא ניתן לקרוא את התגובה ישירות ב-Fetch, 
-                // בגרסה מלאה מומלץ להשתמש ב-JSONP או בשרת Proxy אם רוצים אישור הצלחה.
-                return true; 
-            } catch (e) {
-                console.error(e);
-                return false;
-            }
+        renderMenus() {
+            // רינדור רשימת עובדים ל-Datalist
+            const list = document.getElementById('employee-options');
+            list.innerHTML = APP_DATA.employees.map(e => `<option value="${e.he}">${e.id}</option>`).join('');
+
+            // רינדור תפריטים
+            this.fillSelect('type', APP_DATA.main_course);
+            this.fillSelect('meat', APP_DATA.meat);
+            this.fillSelect('drink', APP_DATA.beverages);
         },
 
-        // פונקציית API משופרת (בתנאי ש-CORS מאושר ב-Backend)
-        async secureApi(action, data = {}) {
+        fillSelect(id, data) {
+            const el = document.getElementById(id);
+            el.innerHTML = data.map(item => `<option value="${item.he}">${this.lang === 'he' ? item.he : item.ru}</option>`).join('');
+        },
+
+        updatePlaceholders() {
+            const noteInput = document.getElementById('note');
+            const randomNote = APP_DATA.common_notes[Math.floor(Math.random() * APP_DATA.common_notes.length)];
+            noteInput.placeholder = this.lang === 'he' ? `למשל: ${randomNote}` : `Например: ${randomNote}`;
+        },
+
+        toggleLang() {
+            this.lang = this.lang === 'he' ? 'ru' : 'he';
+            document.documentElement.dir = this.lang === 'he' ? 'rtl' : 'ltr';
+            this.renderMenus(); // עדכון שמות המנות בתפריט
+            // ... שאר לוגיקת החלפת השפה מהגרסה הקודמת ...
+        },
+
+        async apiCall(action, data = {}) {
             this.setLoading(true);
             try {
-                const res = await fetch(WEB_APP_URL, {
+                const res = await fetch(PROXY_URL, {
                     method: 'POST',
-                    body: JSON.stringify({ secret: API_SECRET, action: action, ...data })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action, ...data })
                 });
                 const json = await res.json();
                 this.setLoading(false);
-                return json.success ? json.data : null;
+                return json.success ? json.data : (alert(json.error), null);
             } catch (e) {
                 this.setLoading(false);
+                alert("Connection Error");
                 return null;
             }
-        },
-
-        switchTab(tab) {
-            ['order', 'history', 'admin'].forEach(v => {
-                document.getElementById('view-' + v).style.display = (v === tab) ? 'block' : 'none';
-                document.getElementById('tab-' + v).classList.toggle('active', v === tab);
-            });
         },
 
         setLoading(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; },
 
         async submitOrder() {
             const name = document.getElementById('name').value;
-            if(!name) return alert("הזן שם");
-            
-            const orderData = {
-                name: name,
-                type: document.getElementById('type').value,
-                meat: document.getElementById('meat').value,
-                drink: document.getElementById('drink').value,
-                note: document.getElementById('note').value
-            };
+            if(!name) return alert("בחר שם");
 
-            const success = await this.secureApi('submitOrder', { data: orderData });
-            if(success) alert("הפעולה בוצעה!");
-            else alert("שגיאה בתקשורת - וודא שהסקריפט מוגדר כ-Anyone");
-        },
-
-        async autoLoadHistory() {
-            const name = document.getElementById('name').value;
-            if(!name) return;
-            const data = await this.secureApi('getHistory', { name: name });
-            if(data) {
-                document.getElementById('hist-list').innerHTML = data.map(i => `
-                    <div class="history-item">
-                        <div><b>${i.order}</b><br><small>${i.date}</small></div>
-                        <div style="color:var(--accent)">${i.drink}</div>
-                    </div>
-                `).join('');
-            }
-        },
-
-        async fetchSummary(mode) {
-            const data = await this.secureApi('getSummary', { mode: mode });
-            if(data) {
-                document.getElementById('admin-results').style.display = 'block';
-                document.getElementById('out-he').innerText = data.he.raw;
-                document.getElementById('out-ru').innerText = data.ru.raw;
-            }
-        },
-
-        copy(id) {
-            const txt = document.getElementById(id).innerText;
-            navigator.clipboard.writeText(txt).then(() => alert("הועתק!"));
-        },
-
-        toggleLang() {
-            this.lang = this.lang === 'he' ? 'ru' : 'he';
-            document.documentElement.dir = this.lang === 'he' ? 'rtl' : 'ltr';
-            document.getElementById('app-title').innerText = this.dict[this.lang].title;
-            document.getElementById('btn-submit').innerText = this.dict[this.lang].submit;
+            const result = await this.apiCall('submitOrder', {
+                data: {
+                    name: name,
+                    type: document.getElementById('type').value,
+                    meat: document.getElementById('meat').value,
+                    drink: document.getElementById('drink').value,
+                    note: document.getElementById('note').value
+                }
+            });
+            if(result) alert(result);
         }
     };
+
+    // הפעלה ראשונית
+    window.onload = () => UI.init();
 </script>
-</body>
-</html>
+
+<div class="field-group">
+    <label id="lbl-name">שם עובד</label>
+    <input type="text" id="name" list="employee-options" placeholder="חפש שם...">
+    <datalist id="employee-options"></datalist>
+</div>
