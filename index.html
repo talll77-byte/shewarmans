@@ -1,115 +1,41 @@
-<script>
-    const PROXY_URL = "https://rough-bush-1bda.talll77.workers.dev";
+<style>
+    :root {
+        --bg-color: #e0e5ec;
+        --shadow-light: 12px 12px 20px #a3b1c6, -12px -12px 20px #ffffff;
+        --shadow-inset: inset 6px 6px 12px #b8b9be, inset -6px -6px 12px #ffffff;
+        --accent-color: #ff6b00;
+        --text-color: #2d3436;
+    }
 
-    const APP_DATA = {
-        employees: [
-            { he: "רשיד באקייב", ru: "Рашид Бакаев", id: "10211" },
-            { he: "טל לדיז'ינסקי", ru: "Таль Ладыжинский", id: "10201" },
-            { he: "סרגיי סופוניצקי", ru: "Сергей Софоницкий", id: "100149" },
-            { he: "אנדריי בייטין", ru: "Андрей Бейтин", id: "101088" },
-            { he: "קרימר אלכסנדר", ru: "Александр Кример", id: "10238" },
-            { he: "קוסטיה אסקרוב", ru: "Костя Aскаров", id: "10318" },
-            { he: "אנג'ליקה פומזונובסקי", ru: "Анжелика Помозоновски", id: "10229" }
-        ],
-        main_course: [
-            { he: "מגש", ru: "В лотке (Хамгашит)" },
-            { he: "בפיתה (כולל פחית שתייה)", ru: "В пите (включая напиток)" },
-            { he: "בבגט (כולל פחית שתייה)", ru: "В багете (включая напиток)" }
-        ],
-        meat: [
-            { he: "מעורב גבי", ru: "смешанный Габи" },
-            { he: "פרגית", ru: "Паргит" },
-            { he: "שווארמה", ru: "Шаурма" },
-            { he: "קבב", ru: "Кебаб" }
-        ],
-        beverages: [
-            { he: "קולה זירו", ru: "Кола Зеро" },
-            { he: "קולה", ru: "Кола" },
-            { he: "ספרייט", ru: "Спрайт" }
-        ],
-        common_notes: ["בלי בצל", "לא קולה. או ספרייט", "לא לשים בצל חי", "לי בלי לי - בצל חיי"]
-    };
+    body { background-color: var(--bg-color); color: var(--text-color); font-family: 'Assistant', sans-serif; }
 
-    const UI = {
-        lang: 'he',
-        
-        init() {
-            this.renderMenus();
-            this.updatePlaceholders();
-        },
+    /* Neumorphic Card Styling */
+    .app-shell {
+        max-width: 450px; margin: 20px auto; padding: 25px;
+        background: var(--bg-color); border-radius: 40px;
+        box-shadow: var(--shadow-light);
+    }
 
-        renderMenus() {
-            // רינדור רשימת עובדים ל-Datalist
-            const list = document.getElementById('employee-options');
-            list.innerHTML = APP_DATA.employees.map(e => `<option value="${e.he}">${e.id}</option>`).join('');
+    input, select {
+        border: none; background: var(--bg-color);
+        box-shadow: var(--shadow-inset); padding: 15px;
+        border-radius: 15px; outline: none; width: 100%;
+        margin-bottom: 20px; font-size: 16px;
+    }
 
-            // רינדור תפריטים
-            this.fillSelect('type', APP_DATA.main_course);
-            this.fillSelect('meat', APP_DATA.meat);
-            this.fillSelect('drink', APP_DATA.beverages);
-        },
+    .btn-submit {
+        background: var(--bg-color); box-shadow: var(--shadow-light);
+        color: var(--accent-color); font-weight: 800; border: none;
+        padding: 20px; border-radius: 20px; width: 100%;
+        cursor: pointer; transition: all 0.2s;
+    }
 
-        fillSelect(id, data) {
-            const el = document.getElementById(id);
-            el.innerHTML = data.map(item => `<option value="${item.he}">${this.lang === 'he' ? item.he : item.ru}</option>`).join('');
-        },
+    .btn-submit:active { box-shadow: var(--shadow-inset); transform: scale(0.98); }
 
-        updatePlaceholders() {
-            const noteInput = document.getElementById('note');
-            const randomNote = APP_DATA.common_notes[Math.floor(Math.random() * APP_DATA.common_notes.length)];
-            noteInput.placeholder = this.lang === 'he' ? `למשל: ${randomNote}` : `Например: ${randomNote}`;
-        },
-
-        toggleLang() {
-            this.lang = this.lang === 'he' ? 'ru' : 'he';
-            document.documentElement.dir = this.lang === 'he' ? 'rtl' : 'ltr';
-            this.renderMenus(); // עדכון שמות המנות בתפריט
-            // ... שאר לוגיקת החלפת השפה מהגרסה הקודמת ...
-        },
-
-        async apiCall(action, data = {}) {
-            this.setLoading(true);
-            try {
-                const res = await fetch(PROXY_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: action, ...data })
-                });
-                const json = await res.json();
-                this.setLoading(false);
-                return json.success ? json.data : (alert(json.error), null);
-            } catch (e) {
-                this.setLoading(false);
-                alert("Connection Error");
-                return null;
-            }
-        },
-
-        setLoading(s) { document.getElementById('loader').style.display = s ? 'flex' : 'none'; },
-
-        async submitOrder() {
-            const name = document.getElementById('name').value;
-            if(!name) return alert("בחר שם");
-
-            const result = await this.apiCall('submitOrder', {
-                data: {
-                    name: name,
-                    type: document.getElementById('type').value,
-                    meat: document.getElementById('meat').value,
-                    drink: document.getElementById('drink').value,
-                    note: document.getElementById('note').value
-                }
-            });
-            if(result) alert(result);
-        }
-    };
-
-    // הפעלה ראשונית
-    window.onload = () => UI.init();
-</script>
-
-<div class="field-group">
-    <label id="lbl-name">שם עובד</label>
-    <input type="text" id="name" list="employee-options" placeholder="חפש שם...">
-    <datalist id="employee-options"></datalist>
-</div>
+    /* Summary Display */
+    .console-box {
+        background: #2d3436; color: #00ff00; padding: 15px;
+        border-radius: 15px; font-family: monospace; white-space: pre-wrap;
+        margin-top: 10px; border: 4px solid #1e272e;
+    }
+</style>
